@@ -1,0 +1,14 @@
+{
+  "name": "drachtio-rtpengine-relay",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+  "drachtio-srf": "^4.5.20",
+    "node-fetch": "^2.6.7",
+    "debug": "^4.3.4",
+    "config": "^3.3.9"
+  }
+}

@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: freeswitch-sip
+  namespace: voip-test
+spec:
+  type: LoadBalancer   # or NodePort if LoadBalancer is unavailable
+  selector:
+    app: freeswitch
+  ports:
+    - name: sip-udp
+      port: 5060
+      protocol: UDP
+      targetPort: 5060
+    - name: sip-tcp
+      port: 5060
+      protocol: TCP
+      targetPort: 5060
+    - name: rtp-start
+      port: 16384
+      protocol: UDP
+      targetPort: 16384
+    # Add more ports or port ranges as needed

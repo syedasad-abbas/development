@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rtpengine
+  namespace: voip-test
+spec:
+  type: ClusterIP
+  selector:
+    app: rtpengine
+  ports:
+    - name: ng
+      port: 22222
+      targetPort: 22222
+      protocol: TCP
+    - name: rtp-proxy
+      port: 12222
+      targetPort: 12222
+      protocol: UDP

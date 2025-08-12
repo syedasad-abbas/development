@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rtpengine
+  namespace: voip-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rtpengine
+  template:
+    metadata:
+      labels:
+        app: rtpengine
+    spec:
+      containers:
+      - name: rtpengine
+        image: jambonz/rtpengine:latest
+        imagePullPolicy: IfNotPresent
+        command: ["/usr/local/bin/rtpengine"]
+        env:
+          - name: POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+        args:
+          - "--interface=eth0/$(POD_IP)"
+          - "--listen-ng=22222"
+          - "--listen-cli=12222"
+          - "--port-min=30000"
+          - "--port-max=30010"
+          - "--foreground"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        ports:
+          - name: ng
+            containerPort: 22222
+            protocol: TCP
+          - name: cli
+            containerPort: 12222
+            protocol: UDP

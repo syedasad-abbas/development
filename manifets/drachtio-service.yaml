@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: drachtio
+  namespace: voip-test
+spec:
+  type: ClusterIP
+  selector:
+    app: drachtio
+  ports:
+    - name: sip
+      port: 5060
+      targetPort: 5060
+      protocol: UDP
+    - name: api
+      port: 9022
+      targetPort: 9022
+      protocol: TCP
+    - name: web
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
