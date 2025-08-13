@@ -17,19 +17,14 @@ spec:
       - name: rtpengine
         image: jambonz/rtpengine:latest
         imagePullPolicy: IfNotPresent
-        command: ["/usr/local/bin/rtpengine"]
         env:
           - name: POD_IP
             valueFrom:
               fieldRef:
                 fieldPath: status.podIP
+        command: ["/bin/sh", "-c"]
         args:
-          - "--interface=eth0/$(POD_IP)"
-          - "--listen-ng=22222"
-          - "--listen-cli=12222"
-          - "--port-min=30000"
-          - "--port-max=30010"
-          - "--foreground"
+          - "/usr/local/bin/rtpengine --interface=eth0/$POD_IP --listen-ng=22222 --listen-cli=12222 --port-min=30000 --port-max=30010 --foreground"
         resources:
           requests:
             memory: "128Mi"
