@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: drachtio-config
+  namespace: voip-test
+data:
+  drachtio.conf.xml: |
+    <?xml version="1.0" encoding="utf-8"?>
+    <drachtio>
+      <admin port="9022" secret="cymru">0.0.0.0</admin>
+
+      <sip>
+        <contacts>
+          <!-- Listen on all interfaces UDP/5060 -->
+          <contact>sip:0.0.0.0:5060;transport=udp</contact>
+          <!-- If you also want TCP for SIP, uncomment the next line -->
+          <!-- <contact>sip:0.0.0.0:5060;transport=tcp</contact> -->
+        </contacts>
+
+        <!-- Simple SIP users for testing -->
+        <users>
+          <user username="1000" password="1234" />
+          <user username="1001" password="1234" />
+        </users>
+      </sip>
+
+      <logging>
+        <sofia-loglevel>3</sofia-loglevel>
+        <loglevel>debug</loglevel>
+      </logging>
+    </drachtio>

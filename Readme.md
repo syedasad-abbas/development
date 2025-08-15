@@ -9,6 +9,19 @@ k3d cluster create voip-cluster \
   -p "22222:22222/tcp@server:0" \
   -p "30000-30010:30000-30010/udp@server:0" \
   --wait
+  # updated cluster command 
+  `k3d cluster create voip-cluster \
+  --servers 1 --agents 1 \
+  --api-port 127.0.0.1:6443 \
+  -p "5060:5060/udp@server:0" \
+  -p "5061:5061/tcp@server:0" \
+  -p "8021:8021/tcp@server:0" \
+  -p "12222:12222/udp@server:0" \
+  -p "22222:22222/tcp@server:0" \
+  -p "30000-30010:30000-30010/udp@server:0" \
+  --wait`
+  # inspect the cluster using 
+  k3d kubeconfig get voip-cluster > ~/.kube/config
 
 
 2.created namespaces 

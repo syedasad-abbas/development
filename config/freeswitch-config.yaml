@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: freeswitch-config
+  namespace: voip-test
+data:
+  vars.xml: |
+    <include>
+      <X-PRE-PROCESS cmd="set" data="default_password=1234"/>
+      <X-PRE-PROCESS cmd="set" data="domain=voip-test.local"/>
+      <X-PRE-PROCESS cmd="set" data="rtp_start_port=16384"/>
+      <X-PRE-PROCESS cmd="set" data="rtp_end_port=16484"/>
+      <X-PRE-PROCESS cmd="set" data="external_rtp_ip=auto-nat"/>
+      <X-PRE-PROCESS cmd="set" data="external_sip_ip=auto-nat"/>
+    </include>
+  sip_profiles.xml: |
+    <include>
+      <gateway name="external">
+        <param name="realm" value="voip-test.local"/>
+        <param name="username" value="1000"/>
+        <param name="password" value="1234"/>
+        <param name="register" value="false"/>
+      </gateway>
+      <profile name="external">
+        <param name="sip-port" value="5060"/>
+        <param name="sip-ip" value="0.0.0.0"/>
+        <param name="rtp-ip" value="0.0.0.0"/>
+        <param name="ext-rtp-ip" value="auto-nat"/>
+        <param name="ext-sip-ip" value="auto-nat"/>
+      </profile>
+    </include>
+  directory.xml: |
+    <include>
+      <domain name="voip-test.local">
+        <params>
+          <param name="dial-string" value="{sip_invite_domain=${domain_name},presence_id=${dialed_user}@${dialed_domain}}${sofia_contact(${dialed_user}@${dialed_domain})}"/>
+        </params>
+        <user id="1000">
+          <params>
+            <param name="password" value="1234"/>
+            <param name="vm-password" value="1234"/>
+          </params>
+          <variables>
+            <variable name="user_context" value="default"/>
+            <variable name="effective_caller_id_name" value="User 1000"/>
+            <variable name="effective_caller_id_number" value="1000"/>
+          </variables>
+        </user>
+      </domain>
+    </include>

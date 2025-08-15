@@ -16,7 +16,22 @@ spec:
       port: 9022
       targetPort: 9022
       protocol: TCP
-    - name: web
-      port: 3000
-      targetPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: drachtio-external
+  namespace: voip-test
+spec:
+  type: LoadBalancer
+  selector:
+    app: drachtio
+  ports:
+    - name: sip
+      port: 5060       # Port Zoiper will use externally
+      targetPort: 5060 # Matches Drachtio container
+      protocol: UDP
+    - name: api
+      port: 9022
+      targetPort: 9022
       protocol: TCP

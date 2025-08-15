@@ -1,6 +1,15 @@
 FROM node:18-alpine
+
 WORKDIR /usr/src/app
-COPY package*.json ./
+
+# copy only what's needed for install
+COPY package.json ./
 RUN npm install --production
-COPY . .
-CMD ["node","app.js"]
+
+# copy your application code
+COPY app.js ./
+
+ENV NODE_ENV=production
+
+# this app does not expose any port (it connects out to drachtio)
+CMD ["node", "app.js"]

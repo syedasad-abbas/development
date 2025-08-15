@@ -14,28 +14,26 @@ spec:
         app: rtpengine
     spec:
       containers:
-      - name: rtpengine
-        image: jambonz/rtpengine:latest
-        imagePullPolicy: IfNotPresent
-        env:
-          - name: POD_IP
-            valueFrom:
-              fieldRef:
-                fieldPath: status.podIP
-        command: ["/bin/sh", "-c"]
-        args:
-          - "/usr/local/bin/rtpengine --interface=eth0/$POD_IP --listen-ng=22222 --listen-cli=12222 --port-min=30000 --port-max=30010 --foreground"
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        ports:
-          - name: ng
-            containerPort: 22222
-            protocol: TCP
-          - name: cli
-            containerPort: 12222
-            protocol: UDP
+        - name: rtpengine
+          image: jambonz/rtpengine:latest # Replace with your image
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          ports:
+            - name: ng
+              containerPort: 22222
+              protocol: TCP
+            - name: rtp-proxy
+              containerPort: 12222
+              protocol: UDP
+          volumeMounts:
+            - name: rtpengine-config
+              mountPath: /etc/rtpengine/rtpengine.conf
+              subPath: rtpengine.conf
+      volumes:
+        - name: rtpengine-config
+          configMap:
+            name: rtpengine-config

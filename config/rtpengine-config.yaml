@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rtpengine-config
+  namespace: voip-test
+data:
+  rtpengine.conf: |
+    [rtpengine]
+    interface = $(POD_IP)
+    listen-ng = 0.0.0.0:22222
+    listen-cli = 0.0.0.0:12222
+    port-min = 30000
+    port-max = 30010
+    log-level = 7
+    log-facility = local1
+    no-fallback = 1
+    no-rtcp = 1
+    delete-delay = 30
+    timeout = 60
+    silent-timeout = 3600
+    final-timeout = 7200

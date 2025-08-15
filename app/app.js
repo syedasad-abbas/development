@@ -1,5 +1,11 @@
 'use strict';
 
+// Simple user database (can be replaced with DB)
+const users = {
+  "1000": "1234",
+  "1001": "1234"
+};
+
 const Srf = require('drachtio-srf');
 const dgram = require('dgram');
 const debug = require('debug')('app');
@@ -13,7 +19,7 @@ const DRACHTIO_SECRET = process.env.DRACHTIO_SECRET || 'cymru';
 const RTPENGINE_HOST = process.env.RTPENGINE_HOST || 'rtpengine.voip-test.svc.cluster.local';
 const RTPENGINE_PORT = Number(process.env.RTPENGINE_PORT) || 22222;
 
-const FREESWITCH_TARGET = 'sip:freeswitch.voip-test.svc.cluster.local:5060';
+const FREESWITCH_TARGET = process.env.FREESWITCH_TARGET || 'sip:freeswitch.voip-test.svc.cluster.local:5060';
 
 srf.connect({
   host: DRACHTIO_HOST,
@@ -21,13 +27,36 @@ srf.connect({
   secret: DRACHTIO_SECRET
 });
 
-srf.on('connect', (err, hp) => {
-  if (err) {
-    console.error('connect error', err);
-    process.exit(1);
-  }
-  console.log('connected to drachtio server at', hp);
+srf.on('connect', (hp) => {
+  console.log('Connected to drachtio server at', hp);
 });
+
+srf.on('error', (err) => {
+  console.error('Drachtio connection error', err);
+  process.exit(1);
+});
+// ------------------- ADD THIS PART BELOW -------------------
+// REGISTER handler to allow SIP clients (Zoiper/SIPP) to register
+srf.register(async (req, res) => {
+  try {
+    const username = req.authorization.username;
+    const password = req.authorization.password;
+
+    if (!username || !password || users[username] !== password) {
+      console.log(`Invalid registration attempt: ${username}`);
+      await res.send(401, 'Unauthorized');
+      return;
+    }
+
+    console.log(`User ${username} registered from ${req.source_address}`);
+    await res.send(200, 'OK');
+  } catch (err) {
+    console.error('Register handling error', err);
+    try { await res.send(500); } catch (e) {}
+  }
+});
+// ------------------- END OF UPDATED PART -------------------
+
 
 function sendRtpengineCommand(command, host, port) {
   return new Promise((resolve, reject) => {
@@ -52,7 +81,6 @@ function sendRtpengineCommand(command, host, port) {
       }
     });
 
-    // Timeout if no response in 2 seconds
     setTimeout(() => {
       client.close();
       reject(new Error('RTPengine UDP request timed out'));
@@ -67,29 +95,20 @@ srf.invite(async (req, res) => {
     const callId = req.get('Call-ID');
     const fromTagMatch = req.get('From').match(/tag=([^;>]+)/);
     const fromTag = fromTagMatch ? fromTagMatch[1] : '';
-    const toTag = ''; // Empty for initial offer
 
-    // Base64 encode SDP
     const sdpBase64 = Buffer.from(inboundSdp).toString('base64');
-
-    // Build RTPengine offer command
-    const offerCommand = `offer call-id=${callId} from-tag=${fromTag} to-tag=${toTag} sdp=${sdpBase64} replace-origin replace-session-connection`;
-
-    debug('Sending offer to RTPengine: %s', offerCommand);
+    const offerCommand = `offer call-id=${callId} from-tag=${fromTag} sdp=${sdpBase64} replace-origin replace-session-connection`;
 
     const offerResponse = await sendRtpengineCommand(offerCommand, RTPENGINE_HOST, RTPENGINE_PORT);
-
-    debug('RTPengine offer response: %s', offerResponse);
 
     if (!offerResponse.startsWith('200 OK')) {
       throw new Error('RTPengine offer error: ' + offerResponse);
     }
 
-    // Extract modified SDP from response
-    const modifiedSdpBase64 = offerResponse.split('sdp=')[1].trim();
-    const modifiedSdp = Buffer.from(modifiedSdpBase64, 'base64').toString();
+    const sdpPart = offerResponse.split('sdp=')[1];
+    if (!sdpPart) throw new Error('No SDP in RTPengine offer response');
+    const modifiedSdp = Buffer.from(sdpPart.trim(), 'base64').toString();
 
-    // Forward INVITE with modified SDP to FreeSWITCH
     const uac = await srf.createUAC(FREESWITCH_TARGET, {
       method: 'INVITE',
       body: modifiedSdp,
@@ -104,22 +123,18 @@ srf.invite(async (req, res) => {
         const toTagAnswerMatch = uacRes.get('To').match(/tag=([^;>]+)/);
         const toTagAnswer = toTagAnswerMatch ? toTagAnswerMatch[1] : '';
 
-        // Build RTPengine answer command
         const answerSdpBase64 = Buffer.from(answerSdp).toString('base64');
         const answerCommand = `answer call-id=${callId} from-tag=${fromTag} to-tag=${toTagAnswer} sdp=${answerSdpBase64} replace-origin replace-session-connection`;
 
-        debug('Sending answer to RTPengine: %s', answerCommand);
-
         const answerResponse = await sendRtpengineCommand(answerCommand, RTPENGINE_HOST, RTPENGINE_PORT);
-
-        debug('RTPengine answer response: %s', answerResponse);
 
         if (!answerResponse.startsWith('200 OK')) {
           throw new Error('RTPengine answer error: ' + answerResponse);
         }
 
-        const modifiedAnswerSdpBase64 = answerResponse.split('sdp=')[1].trim();
-        const modifiedAnswerSdp = Buffer.from(modifiedAnswerSdpBase64, 'base64').toString();
+        const ansSdpPart = answerResponse.split('sdp=')[1];
+        if (!ansSdpPart) throw new Error('No SDP in RTPengine answer response');
+        const modifiedAnswerSdp = Buffer.from(ansSdpPart.trim(), 'base64').toString();
 
         await res.send(200, { body: modifiedAnswerSdp });
       } else {

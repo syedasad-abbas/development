@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: freeswitch
-        image: customswitch-app:latest
+        image: drachtio/drachtio-freeswitch-mrf:0.9.4
         imagePullPolicy: IfNotPresent
         resources:
           requests:
@@ -34,3 +34,17 @@ spec:
           - name: esl
             containerPort: 8021
             protocol: TCP
+        volumeMounts:
+          - name: freeswitch-config
+            mountPath: /etc/freeswitch/vars.xml
+            subPath: vars.xml
+          - name: freeswitch-config
+            mountPath: /etc/freeswitch/sip_profiles/external.xml
+            subPath: sip_profiles.xml
+          - name: freeswitch-config
+            mountPath: /etc/freeswitch/directory/default.xml
+            subPath: directory.xml
+      volumes:
+        - name: freeswitch-config
+          configMap:
+            name: freeswitch-config

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nodejs-app-config
+  namespace: voip-test
+data:
+  DRACHTIO_HOST: "drachtio.voip-test.svc.cluster.local"
+  DRACHTIO_PORT: "9022"
+  DRACHTIO_SECRET: "cymru"
+  RTPENGINE_HOST: "rtpengine.voip-test.svc.cluster.local"
+  RTPENGINE_PORT: "22222"
+  FREESWITCH_TARGET: "sip:freeswitch.voip-test.svc.cluster.local:5060"
